@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Pré-consulta</title>
+<style>
+  :root { --bg:#f4f6f8; --card:#fff; --ink:#18232e; --muted:#5b6b7c; --line:#dfe6ec; --accent:#0e8f86; --accent-soft:#e0f3f1; --danger:#c2410c; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:640px; margin:0 auto; padding:16px 16px 48px; }
+  header { padding:20px 4px 8px; }
+  header .clinic { font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); }
+  h1 { font-size:24px; margin:4px 0 6px; line-height:1.25; }
+  .lead { color:var(--muted); margin:0; }
+  .appt { margin-top:12px; display:inline-block; background:var(--accent-soft); color:#0f5f59; padding:6px 12px; border-radius:99px; font-size:14px; font-weight:600; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 16px; margin-top:16px; }
+  h2 { font-size:17px; margin:0 0 14px; display:flex; gap:10px; align-items:center; }
+  h2 .n { width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; display:inline-grid; place-items:center; font-size:14px; flex:none; }
+  label.f { display:block; margin-bottom:14px; font-size:14px; color:var(--muted); }
+  label.f span.req { color:var(--danger); }
+  input, textarea, select { width:100%; font:inherit; color:inherit; border:1px solid var(--line); border-radius:10px; padding:11px 12px; background:#fff; margin-top:5px; }
+  textarea { min-height:84px; resize:vertical; }
+  input:focus, textarea:focus { outline:3px solid var(--accent-soft); border-color:var(--accent); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
+  @media (max-width:480px){ .grid2 { grid-template-columns:1fr; } }
+  .q { padding:12px 0; border-top:1px solid var(--line); }
+  .q:first-of-type { border-top:0; padding-top:0; }
+  .q .qt { font-weight:600; margin-bottom:8px; }
+  .yn { display:flex; gap:8px; }
+  .yn label { flex:1; }
+  .yn input { position:absolute; opacity:0; pointer-events:none; }
+  .yn span { display:block; text-align:center; padding:10px; border:1px solid var(--line); border-radius:10px; cursor:pointer; font-weight:600; color:var(--muted); }
+  .yn input:checked + span { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .yn input:focus-visible + span { outline:3px solid var(--accent-soft); }
+  .obs { display:none; margin-top:8px; }
+  .q.sim .obs { display:block; }
+  .consent { display:flex; gap:10px; align-items:flex-start; font-size:14px; }
+  .consent input { width:22px; height:22px; margin-top:2px; flex:none; }
+  .btn { display:block; width:100%; border:0; border-radius:12px; padding:15px; font:inherit; font-weight:700; cursor:pointer; margin-top:10px; }
+  .btn.primary { background:#1f9d55; color:#fff; font-size:17px; }
+  .btn.sec { background:#fff; border:1px solid var(--line); color:var(--ink); }
+  .err { color:var(--danger); font-size:14px; margin-top:10px; display:none; }
+  .done { text-align:center; }
+  .done .ok { width:64px; height:64px; border-radius:50%; background:#dcfce7; color:#15803d; display:grid; place-items:center; font-size:34px; margin:10px auto 8px; }
+  .hidden { display:none !important; }
+  .note { font-size:13px; color:var(--muted); margin-top:14px; }
+  .invalid { outline:2px solid var(--danger); }
+  .social { margin-bottom:14px; font-size:14px; color:var(--muted); }
+  .social .yn { margin-top:6px; }
+  .msg { display:block; color:var(--danger); font-size:13px; margin-top:4px; min-height:18px; }
+  .addr { border-top:1px solid var(--line); margin-top:4px; padding-top:12px; }
+  .cep-row { display:flex; gap:10px; align-items:flex-start; }
+  .cep-row .f { flex:1; margin-bottom:4px; }
+  .btn.mini { width:auto; padding:11px 14px; margin-top:24px; font-size:14px; }
+  .cep-search { background:#f8fafc; border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:14px; }
+  .hint { font-size:13px; color:var(--muted); margin:4px 0 10px; }
+  .cep-item { display:block; width:100%; text-align:left; background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin:6px 0; font:inherit; font-size:14px; cursor:pointer; }
+  .cep-item small { color:var(--muted); }
+  select { appearance:auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="bad" class="hidden"><header><h1>Link inválido</h1><p class="lead">Este link de pré-consulta está incompleto. Peça um novo link à clínica.</p></header></div>
+
+  <form id="form" class="hidden" novalidate>
+    <header>
+      <div class="clinic" id="clinic"></div>
+      <h1 id="hello">Formulário de pré-consulta</h1>
+      <p class="lead">Preencha antes da sua consulta. Leva cerca de 3 minutos e ajuda a gente a cuidar melhor de você.</p>
+      <div class="appt hidden" id="appt"></div>
+    </header>
+
+    <section>
+      <h2><span class="n">1</span>Seus dados</h2>
+      <label class="f">Nome completo (como no documento) <span class="req">*</span><input name="name" autocomplete="name" required></label>
+      <div class="f social">
+        <span>Usa nome social?</span>
+        <div class="yn">
+          <label><input type="radio" name="usesSocial" value="n" checked><span>Não</span></label>
+          <label><input type="radio" name="usesSocial" value="s"><span>Sim</span></label>
+        </div>
+      </div>
+      <label class="f hidden" id="socialBox">Nome social <span class="req">*</span><input name="socialName" placeholder="Como você prefere ser chamado(a)"></label>
+      <div class="grid2">
+        <label class="f">Data de nascimento <span class="req">*</span><input name="birth" type="date" required></label>
+        <label class="f">CPF<input name="cpf" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="000.000.000-00"><span class="msg" data-msg="cpf"></span></label>
+        <label class="f">Celular / WhatsApp <span class="req">*</span><input name="phone" type="tel" maxlength="15" autocomplete="tel" placeholder="(DD) 9NNNN-NNNN" required><span class="msg" data-msg="phone"></span></label>
+        <label class="f">E-mail<input name="email" type="email" autocomplete="email"></label>
+      </div>
+      <div class="addr">
+        <div class="cep-row">
+          <label class="f">CEP<input name="cep" inputmode="numeric" maxlength="9" autocomplete="postal-code" placeholder="00000-000"><span class="msg ok-msg" data-msg="cep"></span></label>
+          <button type="button" class="btn sec mini" id="naosei">Não sei o CEP</button>
+        </div>
+        <div class="cep-search hidden" id="cepSearch">
+          <p class="hint">Informe o estado, a cidade e parte do nome da rua:</p>
+          <div class="grid2">
+            <label class="f">Estado (UF)<select name="s_uf"></select></label>
+            <label class="f">Cidade<input name="s_city"></label>
+          </div>
+          <label class="f">Rua / avenida<input name="s_street" placeholder="ex.: Paulista"></label>
+          <button type="button" class="btn sec" id="pesquisar">Pesquisar CEP</button>
+          <div id="cepResults"></div>
+          <p class="hint">Não encontrou? <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener">Busque no site dos Correios</a> ou preencha o endereço abaixo.</p>
+        </div>
+        <label class="f">Rua / avenida<input name="street" autocomplete="address-line1"></label>
+        <div class="grid2">
+          <label class="f">Número<input name="number" inputmode="numeric" placeholder="123 ou S/N"></label>
+          <label class="f">Complemento<input name="complement" placeholder="Apto, bloco..."></label>
+          <label class="f">Bairro<input name="district"></label>
+          <label class="f">Cidade<input name="city" autocomplete="address-level2"></label>
+        </div>
+        <label class="f">Estado (UF)<select name="uf"></select></label>
+      </div>
+      <div class="grid2">
+        <label class="f">Convênio<input name="insurance" placeholder="Particular ou nome do convênio"></label>
+        <label class="f">Responsável (se menor de idade)<input name="guardian"></label>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="n">2</span>Motivo da consulta</h2>
+      <label class="f">O que você gostaria de tratar ou avaliar? Sente alguma dor?<textarea name="queixa" placeholder="Ex.: dor no dente de trás ao mastigar há uma semana"></textarea></label>
+    </section>
+
+    <section>
+      <h2><span class="n">3</span>Sua saúde</h2>
+      <div id="questions"></div>
+    </section>
+
+    <section>
+      <h2><span class="n">4</span>Confirmação</h2>
+      <label class="consent"><input type="checkbox" name="consent" required><span>Declaro que as informações são verdadeiras e autorizo a clínica a usá-las exclusivamente para o meu atendimento, conforme a Lei Geral de Proteção de Dados (LGPD).</span></label>
+      <div class="err" id="err">Confira os campos marcados em vermelho (obrigatórios, CPF ou telefone) e aceite a confirmação.</div>
+      <button class="btn primary" type="submit" id="sendWa">Enviar pelo WhatsApp</button>
+      <button class="btn sec hidden" type="button" id="sendMail">Enviar por e-mail</button>
+      <p class="note">Suas respostas não ficam guardadas neste site: elas vão direto para a clínica pela mensagem que você enviar.</p>
+    </section>
+  </form>
+
+  <div id="done" class="hidden">
+    <section class="done">
+      <div class="ok">✓</div>
+      <h1>Quase lá!</h1>
+      <p class="lead">Confirme o envio da mensagem no WhatsApp. Se ele não abriu, copie as respostas abaixo e envie para a clínica.</p>
+      <button class="btn primary" type="button" id="againWa">Abrir WhatsApp de novo</button>
+      <button class="btn sec" type="button" id="copy">Copiar respostas</button>
+      <textarea id="out" readonly style="min-height:160px;margin-top:12px;font-size:13px"></textarea>
+      <button class="btn sec" type="button" id="edit">Voltar e corrigir</button>
+    </section>
+  </div>
+</div>
+
+<script>
+/* BEGIN br.js (cópia de src/br.js — o formulário precisa ser um arquivo único) */
+/* Máscaras e validação de documentos brasileiros (CPF, CNPJ e telefone).
+   Usado pelo app (window.BR) e pelos testes (require). */
+(function (root) {
+  'use strict';
+  const digits = (s) => String(s == null ? '' : s).replace(/\D/g, '');
+
+  // ---------- CPF ----------
+  function cpfFormat(v) {
+    const d = digits(v).slice(0, 11);
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+    if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+  }
+  function cpfValid(v) {
+    const d = digits(v);
+    if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false; // 000.000.000-00, 111... etc. não valem
+    const dv = (len) => {
+      let s = 0;
+      for (let i = 0; i < len; i++) s += Number(d[i]) * (len + 1 - i);
+      const r = (s * 10) % 11;
+      return r === 10 ? 0 : r;
+    };
+    return dv(9) === Number(d[9]) && dv(10) === Number(d[10]);
+  }
+  function cpfError(v) {
+    const d = digits(v);
+    if (!d) return '';
+    if (d.length < 11) return `CPF incompleto (${d.length} de 11 dígitos)`;
+    if (!cpfValid(d)) return 'CPF inválido';
+    return '';
+  }
+
+  // ---------- CNPJ (numérico e alfanumérico, IN RFB 2.229/2024) ----------
+  // 12 primeiros caracteres: 0-9 ou A-Z; 2 últimos: dígitos verificadores (módulo 11, valor = código ASCII - 48)
+  const alnum = (s) => String(s == null ? '' : s).toUpperCase().replace(/[^0-9A-Z]/g, '');
+  function cnpjFormat(v) {
+    const d = alnum(v).slice(0, 14);
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
+    if (d.length <= 8) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
+    if (d.length <= 12) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
+    return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+  }
+  function cnpjValid(v) {
+    const d = alnum(v);
+    if (!/^[0-9A-Z]{12}\d{2}$/.test(d) || /^(\d)\1{13}$/.test(d)) return false;
+    const dv = (len) => {
+      let s = 0;
+      for (let i = 0; i < len; i++) s += (d.charCodeAt(len - 1 - i) - 48) * (2 + (i % 8));
+      const r = s % 11;
+      return r < 2 ? 0 : 11 - r;
+    };
+    return dv(12) === Number(d[12]) && dv(13) === Number(d[13]);
+  }
+  function cnpjError(v) {
+    const d = alnum(v);
+    if (!d) return '';
+    if (!/^[0-9A-Z]{12}\d{0,2}$/.test(d) && !/^[0-9A-Z]{0,12}$/.test(d)) return 'CNPJ inválido (os 2 últimos caracteres devem ser números)';
+    if (d.length < 14) return `CNPJ incompleto (${d.length} de 14 caracteres)`;
+    if (!cnpjValid(d)) return 'CNPJ inválido';
+    return '';
+  }
+  // Campo que aceita CPF ou CNPJ: até 11 dígitos é CPF; com 12 ou mais caracteres, ou com letra, é CNPJ
+  const docKind = (v) => { const d = alnum(v); return /[A-Z]/.test(d) || d.length > 11 ? 'cnpj' : 'cpf'; };
+  const docFormat = (v) => (docKind(v) === 'cnpj' ? cnpjFormat(v) : cpfFormat(v));
+  const docValid = (v) => (docKind(v) === 'cnpj' ? cnpjValid(v) : cpfValid(v));
+  function docError(v) {
+    const d = alnum(v);
+    if (!d) return '';
+    if (docKind(d) === 'cnpj') return cnpjError(d);
+    if (d.length < 11) return `Incompleto: CPF tem 11 dígitos e CNPJ, 14 (${d.length} digitado${d.length > 1 ? 's' : ''})`;
+    return cpfValid(d) ? '' : 'CPF inválido';
+  }
+
+  // ---------- Telefone ----------
+  // Fixo:    (DD) NNNN-NNNN   → 10 dígitos, número começa com 2 a 5
+  // Celular: (DD) 9NNNN-NNNN  → 11 dígitos, número começa com 9
+  const DDD = new Set([11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 24, 27, 28, 31, 32, 33, 34, 35, 37, 38,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 54, 55, 61, 62, 63, 64, 65, 66, 67, 68, 69, 71, 73, 74, 75, 77, 79,
+    81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92, 93, 94, 95, 96, 97, 98, 99]);
+  // aceita número colado com +55 / 55 / 0 na frente
+  function phoneDigits(v) {
+    let d = digits(v);
+    if (d.length > 11 && d.startsWith('55')) d = d.slice(2);
+    if (d.length > 10 && d.startsWith('0')) d = d.replace(/^0+/, '');
+    return d.slice(0, 11);
+  }
+  function phoneFormat(v) {
+    const d = phoneDigits(v);
+    if (!d) return '';
+    if (d.length <= 2) return `(${d}`;
+    const ddd = d.slice(0, 2), n = d.slice(2);
+    if (n.length <= 4) return `(${ddd}) ${n}`;
+    if (d.length <= 10) return `(${ddd}) ${n.slice(0, 4)}-${n.slice(4)}`;      // fixo (ou digitando)
+    return `(${ddd}) ${n.slice(0, 5)}-${n.slice(5)}`;                          // celular
+  }
+  function phoneType(v) {
+    const d = phoneDigits(v);
+    if (d.length === 11 && d[2] === '9') return 'celular';
+    if (d.length === 10 && /[2-5]/.test(d[2])) return 'fixo';
+    return '';
+  }
+  function phoneError(v) {
+    const d = phoneDigits(v);
+    if (!d) return '';
+    if (d.length < 10) return 'Telefone incompleto';
+    if (!DDD.has(Number(d.slice(0, 2)))) return `DDD ${d.slice(0, 2)} não existe`;
+    if (d.length === 11 && d[2] !== '9') return 'Celular deve começar com 9';
+    if (d.length === 10 && !/[2-5]/.test(d[2])) return d[2] === '9'
+      ? 'Celular precisa de 9 dígitos após o DDD'
+      : 'Fixo deve começar com 2, 3, 4 ou 5';
+    return '';
+  }
+  const phoneValid = (v) => !!digits(v) && !phoneError(v);
+
+  // ---------- CEP e endereço ----------
+  const cepFormat = (v) => { const d = digits(v).slice(0, 8); return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d; };
+  const cepError = (v) => { const n = digits(v).length; return n && n !== 8 ? `CEP incompleto (${n} de 8 dígitos)` : ''; };
+  const UFS = { AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia', CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás', MA: 'Maranhão',
+    MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais', PA: 'Pará', PB: 'Paraíba', PR: 'Paraná', PE: 'Pernambuco', PI: 'Piauí', RJ: 'Rio de Janeiro',
+    RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul', RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo', SE: 'Sergipe', TO: 'Tocantins' };
+  // "Rua X, 123 - Apto 4 - Bairro, Cidade/UF - CEP 00000-000"
+  function addressFormat(a) {
+    if (!a) return '';
+    const l1 = [a.street, a.number].filter(Boolean).join(', ');
+    const local = [a.city, a.uf].filter(Boolean).join('/');
+    const parts = [l1, a.complement, [a.district, local].filter(Boolean).join(', ')].filter(Boolean);
+    let out = parts.join(' - ');
+    if (digits(a.cep).length === 8) out += (out ? ' - ' : '') + 'CEP ' + cepFormat(a.cep);
+    return out;
+  }
+
+  // ---------- máscara ao digitar, mantendo o cursor no lugar ----------
+  function attachMask(input, format) {
+    const apply = () => {
+      const pos = input.selectionStart == null ? input.value.length : input.selectionStart;
+      const before = alnum(input.value.slice(0, pos)).length;
+      const out = format(input.value);
+      if (out === input.value) return;
+      input.value = out;
+      let i = 0, seen = 0;
+      while (i < out.length && seen < before) { if (/[0-9A-Za-z]/.test(out[i])) seen++; i++; }
+      try { input.setSelectionRange(i, i); } catch (e) { /* campo sem seleção */ }
+    };
+    input.addEventListener('input', apply);
+    input.value = format(input.value);
+  }
+
+  const BR = { digits, cpfFormat, cpfValid, cpfError, cnpjFormat, cnpjValid, cnpjError, docKind, docFormat, docValid, docError, phoneDigits, phoneFormat, phoneType, phoneError, phoneValid, cepFormat, cepError, UFS, addressFormat, attachMask, DDD };
+  if (typeof module !== 'undefined' && module.exports) module.exports = BR;
+  else root.BR = BR;
+})(typeof window !== 'undefined' ? window : globalThis);
+/* END br.js */
+</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  // base64 com alfabeto seguro para WhatsApp (sem _ * ~ que viram formatação)
+  const b64d = (s) => { s = s.replace(/\./g, '+').replace(/!/g, '/'); while (s.length % 4) s += '='; return decodeURIComponent(escape(atob(s))); };
+  const b64e = (s) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '.').replace(/\//g, '!').replace(/=+$/, '');
+  const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  let cfg;
+  try {
+    const m = location.hash.match(/c=([A-Za-z0-9.!]+)/);
+    cfg = JSON.parse(b64d(m[1]));
+    if (!cfg.t || !Array.isArray(cfg.q)) throw new Error('cfg');
+  } catch (e) { $('#bad').classList.remove('hidden'); return; }
+
+  const form = $('#form');
+  form.classList.remove('hidden');
+  document.title = 'Pré-consulta — ' + cfg.cl;
+  $('#clinic').textContent = cfg.cl || '';
+  if (cfg.n) $('#hello').textContent = 'Olá, ' + cfg.n.split(' ')[0] + '!';
+  if (cfg.dt) { $('#appt').textContent = 'Sua consulta: ' + cfg.dt; $('#appt').classList.remove('hidden'); }
+  if (cfg.em) $('#sendMail').classList.remove('hidden');
+  if (!cfg.wa) { $('#sendWa').textContent = 'Concluir'; }
+
+  $('#questions').innerHTML = cfg.q.map((q, i) => q[1] === 'y'
+    ? '<div class="q" data-i="' + i + '"><div class="qt">' + esc(q[0]) + '</div><div class="yn">' +
+      '<label><input type="radio" name="a' + i + '" value="sim"><span>Sim</span></label>' +
+      '<label><input type="radio" name="a' + i + '" value="nao"><span>Não</span></label></div>' +
+      '<input class="obs" name="o' + i + '" placeholder="Conte mais (qual, desde quando…)"></div>'
+    : '<div class="q" data-i="' + i + '"><div class="qt">' + esc(q[0]) + '</div><textarea name="a' + i + '"></textarea></div>').join('');
+
+  // pré-preenchimento com os dados já conhecidos pela clínica
+  if (cfg.nc || cfg.n) form.name.value = cfg.nc || cfg.n;
+  const socialToggle = () => { const on = form.usesSocial.value === 's'; $('#socialBox').classList.toggle('hidden', !on); };
+  if (cfg.ns) { form.usesSocial.value = 's'; form.socialName.value = cfg.ns; }
+  form.querySelectorAll('[name=usesSocial]').forEach(r => r.addEventListener('change', () => { socialToggle(); if (form.usesSocial.value === 's') form.socialName.focus(); }));
+  socialToggle();
+  if (cfg.ph) form.phone.value = cfg.ph;
+  // máscaras de CPF e telefone
+  BR.attachMask(form.cpf, BR.cpfFormat); BR.attachMask(form.phone, BR.phoneFormat);
+  const fieldErr = (el, fn) => { const e = BR.digits(el.value) ? fn(el.value) : ''; const m = el.parentElement.querySelector('.msg'); if (m) m.textContent = e; el.classList.toggle('invalid', !!e); return e; };
+  form.cpf.addEventListener('blur', () => fieldErr(form.cpf, BR.cpfError));
+  form.phone.addEventListener('blur', () => fieldErr(form.phone, BR.phoneError));
+
+  // endereço: CEP → rua/bairro/cidade/UF (ViaCEP, base dos Correios) e pesquisa para quem não sabe o CEP
+  const ufOpts = '<option value="">—</option>' + Object.entries(BR.UFS).map(([k, n]) => '<option value="' + k + '">' + k + ' — ' + esc(n) + '</option>').join('');
+  form.uf.innerHTML = ufOpts; form.s_uf.innerHTML = ufOpts;
+  BR.attachMask(form.cep, BR.cepFormat);
+  const cepMsg = $('[data-msg=cep]');
+  const say = (t, ok) => { cepMsg.textContent = t; cepMsg.style.color = ok ? '#15803d' : ''; };
+  const via = (x) => ({ cep: BR.cepFormat(x.cep), street: x.logradouro || '', district: x.bairro || '', city: x.localidade || '', uf: x.uf || '' });
+  const fillAddr = (a) => {
+    form.cep.value = a.cep; form.street.value = a.street; form.district.value = a.district; form.city.value = a.city; form.uf.value = a.uf;
+    form.dispatchEvent(new Event('input')); (a.street ? form.number : form.street).focus();
+  };
+  let lastCep = '';
+  form.cep.addEventListener('input', async () => {
+    const d = BR.digits(form.cep.value);
+    if (d.length !== 8 || d === lastCep) { if (d.length < 8) say(''); return; }
+    lastCep = d; say('Buscando…', true);
+    try {
+      const j = await (await fetch('https://viacep.com.br/ws/' + d + '/json/')).json();
+      if (BR.digits(form.cep.value) !== d) return;
+      if (j.erro) { say('CEP não encontrado. Confira ou toque em "Não sei o CEP".'); return; }
+      const a = via(j); fillAddr(a); say('✓ ' + a.city + '/' + a.uf, true);
+    } catch (e) { say('Não foi possível buscar o CEP agora. Preencha o endereço abaixo.'); }
+  });
+  $('#naosei').onclick = () => {
+    $('#cepSearch').classList.toggle('hidden');
+    if (form.uf.value) form.s_uf.value = form.uf.value; if (form.city.value) form.s_city.value = form.city.value;
+    (form.s_uf.value ? form.s_city : form.s_uf).focus();
+  };
+  $('#pesquisar').onclick = async () => {
+    const uf = form.s_uf.value, city = form.s_city.value.trim(), street = form.s_street.value.trim(), out = $('#cepResults');
+    if (!uf || city.length < 3 || street.length < 3) { out.innerHTML = '<p class="msg">Escolha o estado e digite pelo menos 3 letras da cidade e da rua.</p>'; return; }
+    out.innerHTML = '<p class="hint">Pesquisando…</p>';
+    try {
+      const enc = (s) => encodeURIComponent(s).replace(/%20/g, '+');
+      const j = await (await fetch('https://viacep.com.br/ws/' + uf + '/' + enc(city) + '/' + enc(street) + '/json/')).json();
+      const list = Array.isArray(j) ? j.map(via) : [];
+      if (!list.length) { out.innerHTML = '<p class="msg">Nenhum endereço encontrado. Tente só uma parte do nome da rua.</p>'; return; }
+      out.innerHTML = '<p class="hint">Toque no seu endereço:</p>' + list.map((a, i) => '<button type="button" class="cep-item" data-i="' + i + '"><b>' + esc(a.cep) + '</b> ' + esc(a.street) + '<br><small>' + esc(a.district) + ' · ' + esc(a.city) + '/' + esc(a.uf) + '</small></button>').join('');
+      out.querySelectorAll('.cep-item').forEach(b => b.onclick = () => { const a = list[+b.dataset.i]; lastCep = BR.digits(a.cep); fillAddr(a); say('✓ ' + a.city + '/' + a.uf, true); $('#cepSearch').classList.add('hidden'); out.innerHTML = ''; });
+    } catch (e) { out.innerHTML = '<p class="msg">Sem conexão para pesquisar agora. Use o site dos Correios ou preencha abaixo.</p>'; }
+  };
+
+  // rascunho no aparelho (se disponível)
+  const key = 'odpc-' + cfg.t;
+  try { const d = JSON.parse(localStorage.getItem(key) || 'null'); if (d) Object.keys(d).forEach((k) => { const el = form.elements[k]; if (!el) return; if (el instanceof RadioNodeList) el.value = d[k]; else if (el.type === 'checkbox') el.checked = !!d[k]; else el.value = d[k]; }); } catch (e) { /* sem armazenamento */ }
+  const refresh = () => document.querySelectorAll('.q').forEach((q) => { const r = form.elements['a' + q.dataset.i]; q.classList.toggle('sim', !!(r && r.value === 'sim')); });
+  refresh();
+  form.addEventListener('input', () => {
+    refresh();
+    try { const d = {}; for (const el of form.elements) if (el.name) d[el.name] = el.type === 'checkbox' ? el.checked : (el.type === 'radio' ? form.elements[el.name].value : el.value); localStorage.setItem(key, JSON.stringify(d)); } catch (e) { /* ignora */ }
+  });
+
+  function collect() {
+    const f = form.elements;
+    const d = { name: f.name.value.trim(), socialName: f.usesSocial.value === 's' ? f.socialName.value.trim() : '', birth: f.birth.value, cpf: f.cpf.value.trim(), phone: f.phone.value.trim(), email: f.email.value.trim(),
+      cep: BR.cepFormat(f.cep.value), street: f.street.value.trim(), number: f.number.value.trim(), complement: f.complement.value.trim(), district: f.district.value.trim(), city: f.city.value.trim(), uf: f.uf.value,
+      insurance: f.insurance.value.trim(), guardian: f.guardian.value.trim() };
+    d.address = BR.addressFormat(d);
+    const a = cfg.q.map((q, i) => (f['a' + i] ? f['a' + i].value : '').trim());
+    const o = cfg.q.map((q, i) => (f['o' + i] ? f['o' + i].value.trim() : ''));
+    return { v: 1, t: cfg.t, d, qx: f.queixa.value.trim(), a, o, ts: new Date().toISOString() };
+  }
+  function validate() {
+    let ok = true;
+    if (form.usesSocial.value === 's' && !form.socialName.value.trim()) { form.socialName.classList.add('invalid'); ok = false; } else form.socialName.classList.remove('invalid');
+    ['name', 'birth', 'phone'].forEach((n) => { const el = form.elements[n]; const bad = !el.value.trim(); el.classList.toggle('invalid', bad); if (bad) ok = false; });
+    if (fieldErr(form.cpf, BR.cpfError)) ok = false;
+    if (fieldErr(form.phone, BR.phoneError)) ok = false;
+    if (!form.elements.consent.checked) ok = false;
+    $('#err').style.display = ok ? 'none' : 'block';
+    if (!ok) { const first = form.querySelector('.invalid') || form.elements.consent; first.focus(); }
+    return ok;
+  }
+  function message(r) {
+    const alerts = cfg.q.map((q, i) => (q[1] === 'y' && r.a[i] === 'sim') ? '• ' + q[0] + (r.o[i] ? ' — ' + r.o[i] : '') : null).filter(Boolean);
+    return '*Pré-consulta — ' + cfg.cl + '*\n' +
+      'Paciente: ' + r.d.name + '\n' +
+      (r.qx ? 'Motivo: ' + r.qx + '\n' : '') +
+      (alerts.length ? 'Atenção:\n' + alerts.join('\n') + '\n' : 'Sem alertas de saúde informados.\n') +
+      '\nCódigo para o sistema da clínica (não apague):\n#ODPC1:' + b64e(JSON.stringify(r)) + '#';
+  }
+  let last = '';
+  const go = (url) => { const w = window.open(url, '_blank'); if (!w) location.href = url; };
+  const openWa = () => { if (cfg.wa) go('https://wa.me/' + cfg.wa + '?text=' + encodeURIComponent(last)); };
+  function showDone() {
+    $('#out').value = last;
+    form.classList.add('hidden'); $('#done').classList.remove('hidden'); window.scrollTo(0, 0);
+    if (!cfg.wa) $('#againWa').classList.add('hidden');
+  }
+  function finish(via) {
+    if (!validate()) return;
+    last = message(collect());
+    try { localStorage.setItem(key + '-sent', last); } catch (e) { /* ignora */ }
+    showDone();
+    if (via === 'mail') location.href = 'mailto:' + cfg.em + '?subject=' + encodeURIComponent('Pré-consulta — ' + collect().d.name) + '&body=' + encodeURIComponent(last);
+    else openWa();
+  }
+  // Voltou para a página depois de enviar? Mostra a confirmação de novo.
+  try { const sent = localStorage.getItem(key + '-sent'); if (sent) { last = sent; showDone(); } } catch (e) { /* ignora */ }
+  form.addEventListener('submit', (e) => { e.preventDefault(); finish('wa'); });
+  $('#sendMail').onclick = () => finish('mail');
+  $('#againWa').onclick = openWa;
+  $('#edit').onclick = () => { $('#done').classList.add('hidden'); form.classList.remove('hidden'); };
+  $('#copy').onclick = async () => {
+    try { await navigator.clipboard.writeText(last); $('#copy').textContent = 'Copiado!'; }
+    catch (e) { const t = $('#out'); t.focus(); t.select(); document.execCommand('copy'); $('#copy').textContent = 'Copiado!'; }
+  };
+})();
+</script>
+</body>
+</html>
